@@ -425,33 +425,8 @@ SetDrawerLev (u8 port, u8 value)
 //输出  无
 //返回  空闲
 u8 ICACHE_FLASH_ATTR
-EscOutDevice(u8 *buffer)	// tqy
+EscOutDevice(u8 *buffer)	// tqy	没用的
 {
-	if ((buffer[0] == 48) || (buffer[0] == 49))
-	{
-		buffer[0] -= 48;
-	}
-	if (buffer[0] < 2)
-	{
-		SetDrawerLev(buffer[0],0x01);	// 开钱钱箱
-		MSctCnt = 0;		  // 开钱箱延时
-		while(MSctCnt < buffer[1]*2)
-		{
-			//pollint();
-		}
-		SetDrawerLev(buffer[0],0x00);// 关钱钱箱
-
-		if (buffer[1] > buffer[2])
-		{
-			buffer[2] = buffer[1];
-		}
-		MSctCnt = 0;		  // 关钱箱延时
-		while(MSctCnt < buffer[2]*2)
-		{
-			pollint();
-			//PrnEscHandle();
-		}
-	}
 	return 0;
 }
 
@@ -524,7 +499,7 @@ EscSetRelPosition(u8 * buffer)
 u8 ICACHE_FLASH_ATTR
 EscReadOutdeviceStatus(u8 * buffer)
 {
-    USART_To_USB_Send_Byte(0);	// tqy
+  //  USART_To_USB_Send_Byte(0);	// tqy
     return (0);
 }
 
@@ -613,13 +588,8 @@ u8 EscInitPrinter(u8 * buffer)
 **返回值  :
 */
 u8 ICACHE_FLASH_ATTR
-FSChangeBaudTate(u8 *buffer)
+FSChangeBaudTate(u8 *buffer)	// 没用的
 {
-    if (buffer[0] <= 4)
-    {
-        strprnprop.baudrate = buffer[0];
-        SetBaudRate(strprnprop.baudrate);	// tqy
-    }
     return (0);
 }
 

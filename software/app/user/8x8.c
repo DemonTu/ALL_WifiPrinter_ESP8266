@@ -1,7 +1,7 @@
 
 #include "includes.h"
 
-extern const u8 CHAR8x8[][8] =
+const u8 CHAR8x8[][8] =
 {
 /*
     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,   // 00

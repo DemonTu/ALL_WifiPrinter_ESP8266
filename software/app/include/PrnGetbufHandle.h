@@ -17,6 +17,7 @@ extern uint32_t WaitPrnBufBytes(uint32_t len, uint8_t *buffer, uint32_t timeout,
 ///////////////////////////////////////////////////////////////////////////////////////////////////////
 uint32_t GetRecvDatSize(void);
 uint8_t GetRecvByte(void);
+extern uint8_t put_prn(uint8_t ch);
 
 #endif
 

@@ -23,7 +23,7 @@ void ICACHE_FLASH_ATTR
 SendPrinterStatus(void)	// tqy
 {
 	_REFRESH_PRINTERSTATUS();
-	USART_To_USB_Send_Byte(_GET_PRINTERSTATUS());
+//	USART_To_USB_Send_Byte(_GET_PRINTERSTATUS());
 }
 
 
@@ -56,7 +56,7 @@ PrnStatusHandle(void)
 		_REFRESH_PRINTERSTATUS();
 		if( temp != _GET_PRINTERSTATUS() )
 		{
-			USART_To_USB_Send_Byte(_GET_PRINTERSTATUS());
+			//USART_To_USB_Send_Byte(_GET_PRINTERSTATUS());	// tqy
 		}
 	}
 }

@@ -148,8 +148,8 @@ GsPrnBitimage(u8 *buffer)
     _TimerDelayReset();
     do
     {
-        memset(buf, 0, sizeof(buf));
-        memset(buf_temp, 0, sizeof(buf_temp));
+        os_memset(buf, 0, sizeof(buf));
+        os_memset(buf_temp, 0, sizeof(buf_temp));
         /* 如果倍宽则处理 */
         if (BITMAP_DOUBLE_WIDTH & buffer[0])
         {
@@ -256,7 +256,7 @@ EscSetBitimageMode(u8 * bufferIn)
 		return 0;
 	}
 
-	memset(p_buf, 0, data_num);
+	os_memset(p_buf, 0, data_num);
 	/* 获取数据 */
 	WaitPrnBufBytes(data_num, p_buf, 4000,_WAIT_NBYTE_EXIT);
 
@@ -291,7 +291,7 @@ EscSetBitimageMode(u8 * bufferIn)
 	{
 		base = i*h_bytes;
 
-		memset(DotBuf, 0x00, sizeof(DotBuf));
+		os_memset(DotBuf, 0x00, sizeof(DotBuf));
 
 		for (j=0; j<h_bytes; j++)
 		{
@@ -353,7 +353,7 @@ EscSetBitimageMode(u8 * bufferIn)
 	/* 计算长度 */
 	if (bufferIn[2] > 3)
 	{
-		return ERROR;
+		return FALSE;
 	}
 	/* 获取数据长度 */
 	switch(prn_mode)
@@ -458,7 +458,8 @@ EscSetBitimageMode(u8 * bufferIn)
 //输入  buffer  命令缓冲区数据
 //输出  无
 //返回  空闲
-u8 EscSetUserCharPattern(u8 *buffer)
+u8 ICACHE_FLASH_ATTR
+EscSetUserCharPattern(u8 *buffer)
 {
 	/**目前由于内存不足，暂不支持**/
     return (0);
@@ -484,13 +485,7 @@ FsLogoDownLoad(u8 *buffer)
 	uint8_t *tmpbuf;
 	tmpbuf = common_ram;
 
-#ifdef MUL_LANG	// tqy
-	if (SstFlash_ID == Sst_25F040) logoaddr = LogoStartAddr1;
-	else logoaddr = LogoStartAddr;
-#else // 如果是中文机型
-	if (SstFlash_ID == Sst_25F040) return 0;
-	else logoaddr = LogoStartAddr;
-#endif
+	logoaddr = LogoStartAddr;
 
 	LogoCnt = buffer[0];	// logo 数
 
@@ -537,7 +532,6 @@ FsLogoDownLoad(u8 *buffer)
 				}
 				if (ReceiLength != 0)
 				{
-					//WriteToSerialFlashInPage(addr, sourbuf, ReceiLength, SST_FLASH);// 写 LOGO数据
 					WaitPrnBufBytes(ReceiLength, tmpbuf, 1000, 0);
 					WriteNByteToSst(tmpbuf, ReceiLength, addr, 0);
 				}
@@ -545,7 +539,6 @@ FsLogoDownLoad(u8 *buffer)
 
 		}
 
-		//WriteToSerialFlashInPage(logoaddr, logo_para_buf, 0x100, SST_FLASH);// 写 LOGO参数
 		WriteNByteToSst(logo_para_buf, 0x100, logoaddr, 0);
 	}
 	return 0;
@@ -556,7 +549,8 @@ FsLogoDownLoad(u8 *buffer)
 
 //把纵向点填入,w = 图片宽度(点数),h = 图片高度(点数)
 // hzoom = 1不倍宽，hzoom=2倍宽
-static void PoxFillxLogo(u8 *src,u8 *map,u16 xpos,u16 srcpos,u16 w,u16 h,u16 hzoom)
+static void ICACHE_FLASH_ATTR
+PoxFillxLogo(u8 *src,u8 *map,u16 xpos,u16 srcpos,u16 w,u16 h,u16 hzoom)
 {
     u16 i, j, m;
 	u16 index;
@@ -591,7 +585,8 @@ static void PoxFillxLogo(u8 *src,u8 *map,u16 xpos,u16 srcpos,u16 w,u16 h,u16 hzo
     }
 }
 
-u8 FsLogoPrn(u8 *buffer)
+u8 ICACHE_FLASH_ATTR
+FsLogoPrn(u8 *buffer)
 {
 	u16 LogoLength;
 	u16 LogoX,LogoY;
@@ -626,9 +621,6 @@ u8 FsLogoPrn(u8 *buffer)
 	}
 
 	ReadNByteFromSst(tmpbuf, 0x100, LogoStartAddr); 	// 读 logo 参数区
-
-	//printf("1=%d,%d,%d,%d\r\n", tmpbuf[0], tmpbuf[1], tmpbuf[2], tmpbuf[3]);
-	//printf("2=%d,%d,%d,%d\r\n", tmpbuf[4], tmpbuf[5], tmpbuf[6], tmpbuf[7]);
 
 	// 读取图片的长(单位:点数)跟宽(单位:字节)
 	LogoX = tmpbuf[LogoCnt*4+0] + tmpbuf[LogoCnt*4+1] * 0x100;
@@ -684,7 +676,7 @@ u8 FsLogoPrn(u8 *buffer)
 			{
 				ReadNByteFromSst(&tmpbuf[m], 1, Addr + i + m * LogoY); // 读	LOGO数据至RAM中
 			}
-			memset(DotBuf, 0x00, PrnDotOfByte * 8); 		// 每次打印8行
+			os_memset(DotBuf, 0x00, PrnDotOfByte * 8); 		// 每次打印8行
 			PoxFillxLogo(DotBuf, tmpbuf, xpos, srcpos, LogoX, 8, hzoom);	// 每次打印8行
 			for (m=0; m<8; m++)
 			{
@@ -705,7 +697,8 @@ u8 FsLogoPrn(u8 *buffer)
 //输入  buffer  命令缓冲区数据
 //输出  无
 //返回  空闲
-u8 EscCancelUserChar(u8 *buffer)
+u8 ICACHE_FLASH_ATTR
+EscCancelUserChar(u8 *buffer)
 {
     return (0);
 }
@@ -713,7 +706,8 @@ u8 EscCancelUserChar(u8 *buffer)
 //输入  buffer  命令缓冲区数据
 //输出  无
 //返回  空闲
-u8 EscSetCancelUserCharSet(u8 *buffer)
+u8 ICACHE_FLASH_ATTR
+EscSetCancelUserCharSet(u8 *buffer)
 {
     return (0);
 }
@@ -723,7 +717,8 @@ u8 EscSetCancelUserCharSet(u8 *buffer)
 //输入  buffer  命令缓冲区数据
 //输出  无
 //返回  空闲
-u8 Dc2PrintImage(u8 *buffer)
+u8 ICACHE_FLASH_ATTR
+Dc2PrintImage(u8 *buffer)
 {
 	uint8_t x_dot_of_bytes;
 	uint8_t y_dot_of_bytes;
@@ -738,7 +733,7 @@ u8 Dc2PrintImage(u8 *buffer)
 	}
 
 	/* GSCOMMAND */
-	memset(buf, 0, sizeof(buf));
+	os_memset(buf, 0, sizeof(buf));
 
 	strprnprop.str_buf.src_shift_start_bit = 0;
 	strprnprop.str_buf.src_buf_size = PrnDotOfByte;
@@ -759,10 +754,10 @@ u8 Dc2PrintImage(u8 *buffer)
     /* 复制进缓冲区 */
     while(y_dot_of_bytes--)
     {
-		memset(buf, 0, sizeof(buf));
+		os_memset(buf, 0, sizeof(buf));
 		WaitPrnBufBytes(x_dot_of_bytes, buf, 1000,_WAIT_NBYTE_EXIT);
 		PutBlockToPrintDotBuf(buf,1,1);
-		IWDG_ReloadCounter();
+		system_soft_wdt_feed();
     }
 	return (0);
 }
@@ -771,7 +766,8 @@ u8 Dc2PrintImage(u8 *buffer)
 //输入  buffer  命令缓冲区数据
 //输出  无
 //返回  空闲
-u8 Dc2PrintMsbImage(u8 *buffer)
+u8 ICACHE_FLASH_ATTR
+Dc2PrintMsbImage(u8 *buffer)
 {
 	uint16_t y_dot_of_bytes;
 	uint8_t buf[48];
@@ -779,15 +775,15 @@ u8 Dc2PrintMsbImage(u8 *buffer)
 	y_dot_of_bytes	= buffer[0]+(uint16_t)buffer[1]*256;
 
 	/* GSCOMMAND */
-	memset(buf, 0, sizeof(buf));
+	os_memset(buf, 0, sizeof(buf));
 
 	/* 复制进缓冲区 */
 	while(y_dot_of_bytes--)
 	{
-		memset(buf, 0, sizeof(buf));
+		os_memset(buf, 0, sizeof(buf));
 		WaitPrnBufBytes(48, buf, 1000,_WAIT_NBYTE_EXIT);
 		PutBlockToPrintDotBuf(buf,1,1);
-		IWDG_ReloadCounter();
+		system_soft_wdt_feed();
 	}
 	return (0);
 }
@@ -796,7 +792,8 @@ u8 Dc2PrintMsbImage(u8 *buffer)
 //输入  buffer  命令缓冲区数据
 //输出  无
 //返回  空闲
-u8 Dc2PrintLsbImage(u8 *buffer)
+u8 ICACHE_FLASH_ATTR
+Dc2PrintLsbImage(u8 *buffer)
 {
 	uint16_t y_dot_of_bytes;
 	uint8_t buf[48];
@@ -805,12 +802,12 @@ u8 Dc2PrintLsbImage(u8 *buffer)
 	y_dot_of_bytes	= buffer[0]+(uint16_t)buffer[1]*256;
 
 	/* GSCOMMAND */
-	memset(buf, 0, sizeof(buf));
+	os_memset(buf, 0, sizeof(buf));
 
 	/* 复制进缓冲区 */
 	while(y_dot_of_bytes--)
 	{
-		memset(buf, 0, sizeof(buf));
+		os_memset(buf, 0, sizeof(buf));
 		WaitPrnBufBytes(48, buf, 1000,_WAIT_NBYTE_EXIT);
 		for(i=0;i<PrnDotOfByte;i++)
 		{
@@ -825,7 +822,7 @@ u8 Dc2PrintLsbImage(u8 *buffer)
 			}
 		}
 		PutBlockToPrintDotBuf(buf,1,1);
-		IWDG_ReloadCounter();
+		system_soft_wdt_feed();
 	}
 	return (0);
 }

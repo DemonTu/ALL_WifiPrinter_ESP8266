@@ -9,8 +9,7 @@ CopyOneDotLineToPrn(u8 *buffer)
 {
 	uint8_t next_dat_p;
 
-	if(						// tqy
-//		(SYS_CHECK_OK()) &&
+	if(					
 		(!PaperStatus) &&
 		(!_PRINTER_OVERHEAT())
 	)

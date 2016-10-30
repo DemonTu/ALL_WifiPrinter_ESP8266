@@ -6,7 +6,7 @@
 #define USE_OPTIMIZE_PRINTF
 
 #ifndef CONDITION
-#define CONDITION					0
+#define CONDITION					2
 #endif
 
 #define	YES							1

@@ -3,13 +3,13 @@
 uint32_t ICACHE_FLASH_ATTR
 GetRecvDatSize(void)
 {
-	return 0;//USART1_GetRxBufSize();
+	return user_GetUdpBufSize();
 }
 
 uint8_t ICACHE_FLASH_ATTR
 GetRecvByte(void)
 {
-	return 0;//GetChar();
+	return user_GetUdpChar();
 }
 
 uint32_t ICACHE_FLASH_ATTR
@@ -19,7 +19,7 @@ WaitPrnBufBytes(uint32_t len, uint8_t *buffer, uint32_t timeout,u8 bZeroExit)
 	uint8_t temp;
 
 	dat_cnt = 0;
-    TimerDelayReset();	// tqy
+//    TimerDelayReset();	// tqy	需要重新构建
     while(1)
     {
         //pollint();
@@ -37,7 +37,7 @@ WaitPrnBufBytes(uint32_t len, uint8_t *buffer, uint32_t timeout,u8 bZeroExit)
 		{
 			return dat_cnt;
 		}
-        else if (TimerDelay(timeout))	//tqy
+//        else if (TimerDelay(timeout))	
         {
 		    return dat_cnt;
         }

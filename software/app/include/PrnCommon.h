@@ -14,7 +14,7 @@ typedef enum
     STANDERD_MODE = 0,
     PAGE_MODE,
 } PRINTER_MODE;
-typedef __packed struct
+typedef  struct
 {
     uint8_t *src_buf;             // 源buf
     uint32_t src_buf_size;        // 源大小

@@ -240,7 +240,7 @@ PutLineDotBufToPrnDotBuf(void)
     }
     os_memset(&P_STRLineBuf->LineDotBuf[0][0], 0, sizeof(P_STRLineBuf->LineDotBuf));
     /* 打印行间距 */
-	if (!bBitMapFlag)		// tqy
+	if (!bBitMapFlag)		
 	{
     	PutBlankLineToPrintDotBuf(strprnprop.linespace);
 	}
@@ -407,7 +407,7 @@ void ReadCHINESE_24x24Data(uint8_t *buf,uint32_t ch)
 {
 	uint32_t hzaddr = 0;
 
-	if ((PrintFontType == FONT_JCHINESE) && (SstFlash_ID == Sst_25F040)) // 简体字
+	if (PrintFontType == FONT_JCHINESE) // 简体字
 	{
 		if (ch >= 1410) // 汉字字符(16区啊字开始字符) 0x582 = 15*94
 		{
@@ -419,30 +419,7 @@ void ReadCHINESE_24x24Data(uint8_t *buf,uint32_t ch)
 
 		}
 	}
-	else
-    {
-//        hzaddr = ch * 72 + 0x10000 ; // 繁体字 (繁体汉字字库)
-
-        switch(HzAreaF)
-        {
-            case 0:             // 符号区
-                hzaddr = GbkSymbolAddr;
-                break;
-            case 1:             // GB2312
-                hzaddr = GbkGb2312Addr;
-                break;
-            case 2:             // PART1
-                hzaddr = GbkPart1Addr;
-                break;
-            case 3:             // PART2
-                hzaddr = GbkPart2Addr;
-                break;
-            default:
-                hzaddr = GbkSymbolAddr;
-                break;
-        }
-        hzaddr += ch * 72;
-    }
+    
 	if ((PrintFontType == FONT_JCHINESE) && (ch/0x100 == 0xff)) // 如果是用户自定义字
     {
         os_memset(buf, 0, 72);

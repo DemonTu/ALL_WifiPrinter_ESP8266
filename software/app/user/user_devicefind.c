@@ -8,20 +8,8 @@
  * Modification history:
  *     2014/3/12, v1.0 create this file.
 *******************************************************************************/
-#include "ets_sys.h"
-#include "os_type.h"
-#include "osapi.h"
-#include "mem.h"
-#include "user_interface.h"
-
+#include "includes.h"
 #include "espconn.h"
-//#include "user_json.h"
-#include "user_devicefind.h"
-
-// user device
-#include "UserFlashProcessAPI.h"
-#include "UserKeyDeviceAPI.h"
-#include "userSensorDetection.h"
 
 /*---------------------------------------------------------------------------*/
 LOCAL struct espconn ptrespconn;
@@ -46,6 +34,33 @@ typedef struct
 
 #define ACK_OK				0x10
 #define ACK_ERROR			0x11
+
+#ifdef UART_HW_FLOW
+#define ENABLE_RTS()			Uart_RTS_LOW()
+#define DISABLE_RTS()			Uart_RTS_HIGH()
+#define RXBUF_HIGH_LEVEL		(udp_rx_buf_Number-512)
+#define RXBUF_LOW_LEVEL			(udp_rx_buf_Number-512)
+#endif
+
+#define udp_rx_buf_Number  	0x800    		/* 接接缓冲区大小,必须为2的n次方 */
+
+
+typedef struct
+{
+	volatile u16 head;
+	volatile u16 tail;
+	volatile u8  timeout;
+	volatile u8  error;
+} UDP_RX_T;
+
+typedef struct
+{
+	UDP_RX_T      rx;
+} UDP_T;
+
+static UDP_T udp;
+static uint8_t udp_rx_buf[udp_rx_buf_Number];
+
 /******************************************************************************
  * FunctionName : udpDataPacket
  * Description  : Packeting udp data to send
@@ -82,6 +97,63 @@ udpDataPacket(uint8_t *sendBuf, uint16_t len, uint8_t cmd)
 }
 
 /******************************************************************************
+ * FunctionName : user_GetUdpChar
+ * Description  : get a char from queue of revice data
+ * Parameters   : void
+ * Returns      : char
+*******************************************************************************/
+uint8_t ICACHE_FLASH_ATTR
+user_GetUdpChar(void)
+{
+    u8 c;
+
+    c = udp_rx_buf[udp.rx.tail];
+
+   	udp.rx.tail = RBUF_NEXT_PT(udp.rx.tail, 1, udp_rx_buf_Number);
+#ifdef UART_HW_FLOW
+	if( user_GetUdpBufSize() < RXBUF_LOW_LEVEL)
+	{
+		ENABLE_RTS();		/* udp流控 */
+	}
+#endif
+
+    return c;
+}
+
+/******************************************************************************
+ * FunctionName : user_GetUdpBufSize
+ * Description  : get the length of revice data
+ * Parameters   : void
+ * Returns      : length
+*******************************************************************************/
+uint16_t ICACHE_FLASH_ATTR
+user_GetUdpBufSize(void)
+{
+	return (udp.rx.head < udp.rx.tail) ? (udp_rx_buf_Number+udp.rx.head-udp.rx.tail):(udp.rx.head - udp.rx.tail);
+}
+
+/******************************************************************************
+ * FunctionName : put_prn
+ * Description  : 填字符打印
+ * Parameters   : char
+ * Returns      : 1
+*******************************************************************************/
+uint8_t ICACHE_FLASH_ATTR
+put_prn(uint8_t ch)
+{
+	uint16_t head;
+	head = RBUF_NEXT_PT(udp.rx.head, 1, udp_rx_buf_Number);
+	while (head == udp.rx.tail)           // 有空间
+	{
+		system_soft_wdt_feed();
+		PrnEscHandle();
+	}
+	udp_rx_buf[udp.rx.head] = ch;
+	udp.rx.head = head;
+	return 1;
+}
+
+/******************************************************************************
  * FunctionName : user_devicefind_recv
  * Description  : Processing the received data from the host
  * Parameters   : arg -- Additional argument to pass to the callback function
@@ -92,14 +164,10 @@ udpDataPacket(uint8_t *sendBuf, uint16_t len, uint8_t cmd)
 LOCAL void ICACHE_FLASH_ATTR
 user_devicefind_recv(void *arg, char *pusrdata, unsigned short length)
 {
-    char DeviceBuffer[60] = {0};
-	unsigned short datLen=0;
     char hwaddr[6];
     struct ip_info ipconfig;
-	DataStr datAnalyze;
-
-	char sendFlag=0;
-
+	uint16_t head;
+	
     if (wifi_get_opmode() != STATION_MODE) {
         wifi_get_ip_info(SOFTAP_IF, &ipconfig);
         wifi_get_macaddr(SOFTAP_IF, hwaddr);
@@ -116,55 +184,34 @@ user_devicefind_recv(void *arg, char *pusrdata, unsigned short length)
     if (pusrdata == NULL) {
         return;
     }
-	else if (length < sizeof(DataStr))
-	{
-		return;
-	}
-	datAnalyze.head = pusrdata[2];
-	datAnalyze.cmd = pusrdata[3];
-	datAnalyze.len = (pusrdata[4]<<8)|pusrdata[5];
-	os_printf("len=%d\r\n", datAnalyze.len);
-	switch(datAnalyze.cmd)
-	{
-		case FIND_DEVICE:
-			if (0 == datAnalyze.len)
-			{
-				/* 初始通信用 */
-				os_memcpy(DeviceBuffer, sysPara.deviceID, sizeof(sysPara.deviceID));		
-				os_memcpy(&DeviceBuffer[sizeof(sysPara.deviceID)], hwaddr, 6);		
-				os_memcpy(&DeviceBuffer[sizeof(sysPara.deviceID)+6], &ipconfig.ip, 4);		
-				datLen = sizeof(sysPara.deviceID)+10;
-				sendFlag = 1;
-			}
-			else if ((datAnalyze.len == sizeof(sysPara.deviceID)) &&
-				(0==os_memcmp(sysPara.deviceID, &pusrdata[6], datAnalyze.len)))
-			{
-				/* 应答 */
-				os_memcpy(&DeviceBuffer[0], hwaddr, 6);		
-				os_memcpy(&DeviceBuffer[6], &ipconfig.ip, 4);	
-				datLen = 10;
-				sendFlag = 1;
-			}
-			break;
-		case SET_DEVICE_ID:
-			os_memcpy(sysPara.deviceID, &pusrdata[sizeof(datAnalyze)], datAnalyze.len);
-			sysTemParaSave();
-			datLen = 0;
-			sendFlag = 1;
-			break;
-		case SYNC_SYSTEM_TIME:
-			
-			break;
-		case READ_DEVICE_PARA:
-			break;
-
-		default:
-			break;
-	}
-    if (sendFlag) 
+	
+	while (length)
     {
-		udpDataPacket(DeviceBuffer, datLen, ACK_OK);
+	    head = RBUF_NEXT_PT(udp.rx.head, 1, udp_rx_buf_Number);
+	    if (head != udp.rx.tail)			/* 有空间 */
+	    {
+			udp_rx_buf[udp.rx.head] = *pusrdata;
+	        udp.rx.head = head;
+	        udp.rx.timeout = 0;
+	    }
+	    else                              	/* 满 流量控制 */
+	    {
+	        udp.rx.error = 1;			/* error */
+	    	break;
+	    }
+		pusrdata++;
+		length--;
+	}	
+#ifdef UART_HW_FLOW
+	if( user_GetUdpBufSize() >= RXBUF_HIGH_LEVEL)
+	{
+		DISABLE_RTS();
 	}
+	else
+	{
+		ENABLE_RTS();
+	}
+#endif
 
 }
 

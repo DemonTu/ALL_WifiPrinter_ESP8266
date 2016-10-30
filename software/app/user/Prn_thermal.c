@@ -280,7 +280,7 @@ Prn_Time_Int(void)
 			break;
 		case _MODE_COOL_STEP:
 			/* 判断spi数据是否已经发送完 */
-			if (DMA_GetFlagStatus(SPI_MASTER_Tx_DMA_FLAG))
+		//	if (DMA_GetFlagStatus(SPI_MASTER_Tx_DMA_FLAG))	 tqy
 			{
 				_NEXT_PRINT_MODE(_MODE_COOL_STEP, _MODE_MOTOR_STEP, StepHeatTm);
 				MotorStep();

@@ -78,7 +78,7 @@
 #define	_ReadASCII_12x24Data(buf,ch)	os_memcpy(buf, CHAR12x24[ch-0x20], sizeof(CHAR12x24[0]))
 #define _ReadASCII_8x16Data(buf,ch)		os_memcpy(buf, CHAR8x16[ch-0x20], sizeof(CHAR8x16[0]))
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-typedef __packed struct
+typedef  struct
 {
     uint8_t LineDotBuf[MAX_LINE_DOT_BUF_HIGH][PrnDotOfByte];
     uint8_t Charmap[MAX_FONT_SIZE];
@@ -112,6 +112,7 @@ extern void PutBlankLineToPrintDotBuf(u16 LineNum);
 extern void ReadCHINESE_24x24Data(uint8_t *buf,uint32_t ch);
 extern void ReadCHINESE_16x16Data(uint8_t *buf,uint32_t ch);
 extern void ReadASCII_12x24Data(uint8_t *buf,uint8_t ch);
+extern void ReadASCII_9x17Data(uint8_t *buf,uint8_t ch);
 extern void ReadASCII_Data(u8 font,uint8_t width,uint8_t height,uint8_t *buf,uint8_t ch);
 extern void Internationalcode(u8 Code);
 extern void PutBlackLine(uint32_t line);

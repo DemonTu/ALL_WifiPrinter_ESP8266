@@ -6,7 +6,7 @@ typedef struct strcmd
     u8   codevalue;
     u16  waitcount;                // 该命令参数个数
     u8  (*codefunc)(u8 *buffer);   // 对应code执行的命令
-} __packed STRPRNCMD;
+}  STRPRNCMD;
 ////////////////////////////////////////////////////////////////////////////////
 extern u8 HzAreaF;
 

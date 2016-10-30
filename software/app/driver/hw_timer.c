@@ -12,6 +12,8 @@
 #include "os_type.h"
 #include "osapi.h"
 
+#include "driver/Hw_timer.h"
+
 #define US_TO_RTC_TIMER_TICKS(t)          \
     ((t) ?                                   \
      (((t) > 0x35A) ?                   \
@@ -34,10 +36,6 @@ typedef enum {			//timer interrupt mode
     TM_EDGE_INT   = 0,	//edge interrupt
 } TIMER_INT_MODE;
 
-typedef enum {
-    FRC1_SOURCE = 0,
-    NMI_SOURCE = 1,
-} FRC1_TIMER_SOURCE_TYPE;
 
 /******************************************************************************
 * FunctionName : hw_timer_arm

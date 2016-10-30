@@ -1,11 +1,22 @@
 #ifndef __INCLUDES_H
 	#define __INCLUDES_H
-	
+//===========================================================================
+typedef enum
+{
+    OP_ERROR,
+    OP_OK,
+}ENUM_OP_STATE;	
+//===========================================================================	
 #include "ets_sys.h"
+#include "os_type.h"
 #include "osapi.h"
-#include "driver/spi.h"
+#include "mem.h"
+#include "gpio.h"
 
 #include "user_interface.h"
+
+#include "driver/spi.h"
+#include "driver/Hw_timer.h"
 
 #include "font.h"
 #include "swTool.h"
@@ -21,7 +32,6 @@
 #include "Prn_Driver.h"
 
 #include "prn_thermal.h"
-//#include "prn_led.h"
 
 //#include "PrnGetbufHandle_drv.h"
 #include "PrnGetbufHandle.h"
@@ -40,16 +50,22 @@
 
 #include "PrnBmpHandle.h"
 
-#if INCLUDE_FENDUAN
-#include "MulHeat.h"
-#endif
+//-----------------------------------------------------------------------------
+// ≤‚ ‘
+#include "PrnTestPage.h"
+
 #include "PrnStatus.h"
 
 //-----------------------------------------------------------------------------
 #include "LoadSet.h"
 //-----------------------------------------------------------------------------
 
+// user device
 #include "UserFlashProcessAPI.h"
+#include "UserKeyDeviceAPI.h"
+#include "userSensorDetection.h"
+#include "user_devicefind.h"
+
 
 
 #define	NOPAPER					0x01		/* »±÷Ω */
@@ -58,10 +74,5 @@
 
 #define RBUF_NEXT_PT(dat, offset, size)     (((dat) + (offset)) & ((size) - 1))
 //===========================================================================
-typedef enum
-{
-    OP_ERROR,
-    OP_OK,
-}ENUM_OP_STATE;
 
 #endif	

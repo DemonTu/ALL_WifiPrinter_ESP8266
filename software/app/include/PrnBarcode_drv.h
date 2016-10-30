@@ -11,7 +11,7 @@ typedef struct
 {
     u8 dotbuf[17][PrnDotOfByte];      	/* 1点行条码 + 16点行数字 */
     uint32_t barcode_h;            		/* 条码宽度 */
-}__packed *p_Prn_Barcode;
+} *p_Prn_Barcode;
 
 extern const u8 ClrHBit[8];
 extern const u8 ClrLBit[8];

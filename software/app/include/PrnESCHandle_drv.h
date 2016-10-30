@@ -143,7 +143,7 @@ typedef enum
 //==============================================================================
 extern const STR_FONT_SIZE FONT_MAP[FONT_MAX];
 
-typedef __packed struct
+typedef  struct
 {
     u16  isvalid;         	/* 判断设定是否合法 */
     uint32_t baudrate;    	/* 默认波特率 */

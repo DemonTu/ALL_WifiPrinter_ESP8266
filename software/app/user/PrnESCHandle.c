@@ -1,7 +1,6 @@
 #include "includes.h"
 
 u8 HzAreaF = 0;
-u8 NoHzF = 0;
 
 #ifdef MUL_LANG
 static const uint8_t VietnamTBL[]=
@@ -241,31 +240,20 @@ HandleDleCom(void)
 			{
 				case 1:
 					temp =	((strprnprop.printenable==0)<<3) | (1<<1) | (1<<4);
-					USART_To_USB_Send_Byte(temp);
+				//	USART_To_USB_Send_Byte(temp);
 					break;
 				case 2:
-#if INCLUDE_CUTPAPER
-		#if INCLUDE_PLATENSW
-					temp =	((PaperStatus & NOPRESSSW) <<2 ) | (GET_FEEDKEY_STATUS()<<3) | ((PaperStatus & NOPAPER) <<5 ) | ( CutPaperF<<6 ) | (1<<1) | (1<<4);
-		#else
-					temp =	((PaperStatus & NOPAPER) <<2 ) | (GET_FEEDKEY_STATUS()<<3) | ((PaperStatus & NOPAPER) <<5 ) | ( CutPaperF<<6 ) | (1<<1) | (1<<4);
-		#endif
-#else
+
 		#if INCLUDE_PLATENSW
 					temp =	((PaperStatus & NOPRESSSW) <<2 ) | (GET_FEEDKEY_STATUS()<<3) | ((PaperStatus & NOPAPER) <<5 ) | (1<<1) | (1<<4);
 		#else
-					temp =	((PaperStatus & NOPAPER) <<2 ) | (GET_FEEDKEY_STATUS()<<3) | ((PaperStatus & NOPAPER) <<5 ) | (1<<1) | (1<<4);
+					temp =	((PaperStatus & NOPAPER) <<2 ) | ((PaperStatus & NOPAPER) <<5 ) | (1<<1) | (1<<4);
 		#endif
-#endif
-					USART_To_USB_Send_Byte(temp);
+				//	USART_To_USB_Send_Byte(temp);
 					break;
 				case 3:
-#if INCLUDE_CUTPAPER
-					temp =	( CutPaperF<<3 ) | ((_PRINTER_OVERHEAT()||_PRINTER_OVERPOWER())<<6) | (1<<1) | (1<<4);
-#else
-					temp =	((_PRINTER_OVERHEAT()) | (1<<1) | (1<<4);
-#endif
-					USART_To_USB_Send_Byte(temp);
+					temp =	((_PRINTER_OVERHEAT()) | (1<<1) | (1<<4));
+				//	USART_To_USB_Send_Byte(temp);
 					break;
 				case 4:
 					temp =
@@ -276,7 +264,7 @@ HandleDleCom(void)
 #endif
 						| ((PaperStatus & NOPAPER)?0x60:0) | (1<<1) | (1<<4);
 
-					USART_To_USB_Send_Byte(temp);
+				//	USART_To_USB_Send_Byte(temp);
 					break;
 				default:
 					break;
@@ -287,8 +275,9 @@ HandleDleCom(void)
 
 
 void ICACHE_FLASH_ATTR
-VK_HECR_PROC(void)	// tqy
+VK_HECR_PROC(void)	// tqy	没用的
 {
+#if 0
 	uint8_t *rxbuf;
 	uint16_t Len;
 	STR_PECRPORTOCOL lan;
@@ -332,6 +321,7 @@ VK_HECR_PROC(void)	// tqy
             }
 		}
 	}
+#endif	
 }
 
 
@@ -414,7 +404,7 @@ HandleCtrlChar(uint8_t ch)
 	        	P_STRLineBuf->max_high = FONT_MAP[strprnprop.font].h;
 				os_memset(&P_STRLineBuf->LineDotBuf[0][0], 0, sizeof(P_STRLineBuf->LineDotBuf));
 			}
-			if (!bBitMapFlag) // tqy
+			if (!bBitMapFlag) 
 			{
 				PutLineDotBufToPrnDotBuf();
 			}
@@ -460,148 +450,6 @@ HandleCtrlChar(uint8_t ch)
             break;
     }
 }
-
-#ifndef MUL_LANG
-//函数  字符处理程序
-//输入  无
-//输出  无
-//返回  无
-void ICACHE_FLASH_ATTR
-GetGB18030HzAddr(u16 hzcode)
-{
-	u8 ch,ch1;
-	u16 hzaddr;
-//						  HzAreaF = 0; // 符号区
-
-	ch	= hzcode/0x100;
-	ch1 = hzcode%0x100;
-
-	if ((ch >= 0xa1) && (ch <= 0xa9) && (ch1 >= 0x40)&& (ch1 <= 0xfe)) // 全角符号区(1区)
-	{
-		HzAreaF = 0; // 符号区
-		if (ch1 > 0xa0) // GB 2312符号区 A1A1 - A9FE 9x94 = 846 个符号
-		{
-			hzaddr = (ch-0xa1)*94+(ch1-0xa1);
-		}
-		else  // 5区 (a840-a87e; a880-a8a0; a940-a97e; a980-a9a0; )
-		{
-			if (ch != 0xa8) // 0xa9
-			{
-				hzaddr = 846 + 0x60;
-			}
-			else
-			{
-				hzaddr = 846;
-			}
-
-			if (ch1 > 0x7f)
-			{
-				hzaddr += 0x3f + ch1 - 0x80;
-			}
-			else
-			{
-				hzaddr += ch1 - 0x40;
-			}
-		}
-	}
-
-	else  if (((ch >= 0xB0) && (ch <= 0xf7)) && ((ch1 >= 0xa1) && (ch1 <= 0xfe)))
-	{
-		HzAreaF = 1; // GB2312
-
-		hzaddr = (ch - 0xb0)*94 + ch1-0xa1;
-	}
-	else if (((ch >= 0x81) && (ch <= 0xa0)) && (((ch1 >= 0x40) && (ch1 <= 0x7e)) || ((ch1 >= 0x80) && (ch1 <= 0xFe))))
-	{
-		HzAreaF = 2;  // part 1
-		if (ch1 >= 0x80)
-		{
-			hzaddr = ch1 - 0x41;
-		}
-		else
-		{
-			hzaddr = ch1 - 0x40;
-		}
-		hzaddr += (ch -0x81) * 0xbe;
-	}
-	else if (((ch >= 0xaa) && (ch <= 0xfe)) && (((ch1 >= 0x40) && (ch1 <= 0x7e)) || ((ch1 >= 0x80) && (ch1 <= 0xa0))))
-	{
-		HzAreaF = 3;   // part 2
-		if (ch1 >= 0x80)
-		{
-			hzaddr = ch1 - 0x41;
-		}
-		else
-		{
-			hzaddr = ch1 - 0x40;
-		}
-		hzaddr += (ch - 0xaa) * 0x60;
-	}
-	else
-	{
-		NoHzF = 1;	 // 非法字符
-	}
-
-	if (NoHzF == 0)
-	{
-		//DCharToLineDotBuf(hzaddr);
-		CharacterToCharacterDotBuf(hzaddr, DOUBLE_CHAR);
-	}
-	else
-	{
-		NoHzF = 1;	 // 非法字符
-	}
-}
-
-
-
-void ICACHE_FLASH_ATTR
-JapanCoversion (u16 hzcode) // 将日文转化为GBK,再由GBK得到相应字形码
-{
-    u8 ch,ch1;
-    u16 index1=0xff, index2=0xff;
-    u8 tmpbuf[4];
-
-    ch = hzcode/0x100;
-    ch1= hzcode%0x100;
-
-    if ((ch >= 0x81) && (ch <= 0x9f) && ((ch1 >= 0x40) && (ch1 <= 0xfc)))
-    {
-        index1 = (ch - 0x81)*0xbd ; // 高位
-        index2 = ch1 - 0x40 ;       // 低位
-    }
-    else if ((ch >= 0xe0) && (ch <= 0xef) && ((ch1 >= 0x40) && (ch1 <= 0xfc)))
-    {
-        index1 = (ch - 0xe0)*0xbd + 31*0xbd; // 高位
-        index2 = ch1 - 0x40 ;                // 低位
-    }
-    else if ((ch >= 0xfa) && (ch <= 0xfc) && ((ch1 >= 0x40) && (ch1 <= 0xfc)))
-    {
-        index1 = (ch - 0xfa)*0xbd + 47*0xbd; // 高位
-        index2 = ch1 - 0x40 ;                // 低位
-    }
-
-    if ((index1 != 0xff) || (index2 != 0xff))
-    {
-        //ReadFromFlashDirect((Big5ToGbkIdx + (index1 + index2)*4), tmpbuf, 4, SST_FLASH); // 得到对应的索引表地址
-		ReadNByteFromSst(tmpbuf, 4, (Big5ToGbkIdx + (index1 + index2)*4));
-
-        if (( ch == tmpbuf[0]) && (ch1 ==  tmpbuf[1])) // 如果有相对应的日文内码码
-        {
-            GetGB18030HzAddr(tmpbuf[2]*0x100+tmpbuf[3]);
-        }
-        else NoHzF = 1;   // 非法字符
-    }
-    else NoHzF = 1;   // 非法字符
-
-    if (NoHzF)
-    {
-		CharacterToCharacterDotBuf('?', SINGLE_CHAR);
-		CharacterToCharacterDotBuf('?', SINGLE_CHAR);
-    }
-}
-
-#endif
 
 uint32_t ICACHE_FLASH_ATTR
 PrnEscHandle(void)
@@ -690,7 +538,7 @@ PrnEscHandle(void)
 			{
 				if (PrintFontType == FONT_JCHINESE)	// 简体字
 				{
-					if (SstFlash_ID == Sst_25F040) // 采用GB2312字库
+					// 采用GB2312字库
         			{
 						if (((ch >= 0xb0) && (ch <= 0xf7)) && (buf[1] >= 0xa1))
 		                {
@@ -700,111 +548,13 @@ PrnEscHandle(void)
 		                {
 		                    CharacterToCharacterDotBuf((ch-0xa1)*94+(buf[1]-0xa1), DOUBLE_CHAR);
 		                }
-						#if 0
-		                else if ((ch == 0xfe) && ((buf[1] > 0xa0) && (buf[1] < 0xff)) && (strprnprop.userdef_hzzk_allow[buf[1] - 0xa1] == 0xaa)) // 用户自定字库
-		                {
-		                    CharacterToCharacterDotBuf(0xff00 + buf[1]);
-		                }
-						#endif
 		                else
 		                {
 		                    CharacterToCharacterDotBuf('?', SINGLE_CHAR);
 		                    CharacterToCharacterDotBuf('?', SINGLE_CHAR);
 		                }
 					}
-					else	// 否则是SST25VVF016 采用GBK字库
-					{
-						NoHzF = 0;
-		                GetGB18030HzAddr(ch*0x100 + buf[1]);
 
-		                if  (NoHzF)   // 非法字符
-		                {
-							CharacterToCharacterDotBuf('?', SINGLE_CHAR);
-		                    CharacterToCharacterDotBuf('?', SINGLE_CHAR);
-		                }
-					}
-				}
-				else if (PrintFontType == FONT_FCHINESE)        // 繁体字
-				{
-		            NoHzF = 0;
-					// 采用新字库，可以打印符号
-		            if ((((ch >= 0xA1) && (ch <= 0xc6)) || ((ch >= 0xc9) && (ch <= 0xf9))) && ((buf[1] >= 0x40) && (buf[1] <= 0x7e) || (buf[1] >= 0xa1) && (buf[1] <= 0xfe) && (ch != 0xc6)))
-		            {
-		                u16 index1, index2,ch1;
-		                u8 tmpbuf[4];
-
-		                if (ch < 0xa4)
-		                {
-		                    index1 = (ch - 0xa1)*0xbf;
-		                    index2 = buf[1] - 0x40;
-		                }
-		                else
-		                {
-		                    if (ch < 0xc7)
-		                    {
-		                        index1 = (ch - 0xa4)*157;
-		                    }
-		                    else  // C9以上区 (注：C7 - C8为空区)
-		                    {
-		                        index1 = (ch - 0xc9)*157 + 0x1519;
-		                    }
-
-		                    if ((buf[1] >= 0x40) && (buf[1] <= 0x7f))
-		                    {
-		                        index2 = buf[1] - 0x40;
-		                    }
-		                    else
-		                    {
-		                        index2 = (buf[1] - 0xa1) + 0x3f;
-		                    }
-		                }
-
-		                ch1 = buf[1];
-
-	                    if (ch < 0xa4) // 格式变换
-	                    {
-	                        u8 temp0,temp1,temp2,temp3;
-
-	                        //ReadFromFlashDirect((NewBig5ToGbkIdxFlagAddr + 0x10 + (index1 + index2)*4), tmpbuf, 4, SST_FLASH);
-							ReadNByteFromSst(tmpbuf, 4, (NewBig5ToGbkIdxFlagAddr + 0x10 + (index1 + index2)*4));
-
-	                        temp0 = tmpbuf[0];
-	                        temp1 = tmpbuf[1];
-	                        temp2 = tmpbuf[2];
-	                        temp3 = tmpbuf[3];
-
-	                        tmpbuf[0] = temp2;
-	                        tmpbuf[1] = temp3;
-	                        tmpbuf[2] = temp0;
-	                        tmpbuf[3] = temp1;
-	                    }
-	                    else
-	                    {
-	                        //ReadFromFlashDirect((Big5ToGbkIdx + (index1 + index2)*4), tmpbuf, 4, SST_FLASH);
-							ReadNByteFromSst(tmpbuf, 4, (Big5ToGbkIdx + (index1 + index2)*4));
-	                    }
-
-		                if (( ch == tmpbuf[2]) && (ch1 ==  tmpbuf[3])) // 如果有相对应的BIG5码
-		                {
-		                    GetGB18030HzAddr(tmpbuf[0]*0x100+tmpbuf[1]);
-		                }
-		                else NoHzF = 1;   // 非法字符
-		            }
-		            else
-		            {
-		                NoHzF = 1;   // 非法字符
-		            }
-
-		            if  (NoHzF)   // 非法字符
-		            {
-						CharacterToCharacterDotBuf('?', SINGLE_CHAR);
-		                CharacterToCharacterDotBuf('?', SINGLE_CHAR);
-		            }
-		        }
-				else				   // 日文标志
-				{
-					NoHzF = 0;
-					JapanCoversion(ch*0x100+buf[1]);//得到日文字库
 				}
             }
 			else
